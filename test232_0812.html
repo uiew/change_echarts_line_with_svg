@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>test_svg_lines_like_echarts</title>
+    <script src="jQuery-2.1.4.min.js"></script>
+</head>
+
+<body>
+
+  <svg id = "main_svg" currentScale="1" width="400px" height="300px" viewBox="10 10 600 400">
+
+  </svg>
+
+
+<script>
+    // 全局变量 main_svg, 线
+    var main_svg = document.getElementById('main_svg');
+
+    var x1=10, x2=300, y1=300, y2=200, color="red", width=10;
+    var speed = 50; // 多少秒变动一次；
+
+
+    /**上方输入基本参量信息; 下面不用输入。*/
+    var d = Math.abs((x1-x2)^2 + (y1-y2)^2);
+    // 小圆的个数计算。
+    var n = parseInt(d / width);
+
+    function write_svg_into_line(main_svg, x1, x2, y1, y2, color, width){
+        nodeLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        nodeLine.setAttribute("x1", x1);
+        nodeLine.setAttribute("y1", y1);
+        nodeLine.setAttribute("x2", x2);
+        nodeLine.setAttribute("y2", y2);
+        nodeLine.setAttribute("stroke", color);
+        nodeLine.setAttribute("stroke-width",width);
+
+        //var svgContext =nodeLine.outerHTML;
+        main_svg.appendChild(nodeLine);
+        return main_svg
+    }
+
+    // 功能: 在 SVG 里面画圆。
+    function write_svg_into_obj(main_svg, i){
+        /*
+        *   得到 cx_i = x1 + (2*i+1)*r * (x2 - x1)/d
+            得到 cy_i = y1 + (2*i+1)*r * (y2 - y1)/d
+        * */
+        var r = width/2;
+        nodeCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        nodeCircle.setAttribute("cx", x1 + (2*i+1)*r * (x2 - x1)/d);
+        nodeCircle.setAttribute("cy", y1 + (2*i+1)*r * (y2 - y1)/d);
+        nodeCircle.setAttribute("id", "c"+(i+1));
+        nodeCircle.setAttribute("fill", color);
+        nodeCircle.setAttribute("stroke","white");
+        nodeCircle.setAttribute("stroke-width","0");
+        nodeCircle.setAttribute("r", r);
+
+        //var svgContext =nodeCircle.outerHTML;
+        main_svg.appendChild(nodeCircle);
+        return main_svg
+    }
+
+    // SVG 画板初始化
+    function init() {
+        // 这里把线画出来。
+        main_svg = write_svg_into_line(main_svg, x1,x2,y1,y2, color, width);
+        // 在线段上建立若干个等R的圆。
+        for (var i = 0; i < n; i++) {
+            main_svg = write_svg_into_obj(main_svg, i);
+        }
+    }
+
+    // 颜色逐变得 数据存储为一个二维数组。
+    function setJsonData() {
+        // 最终的目标是远点在前。 255-0 均分的若干个点
+        var array1 = [];
+        for(var k=0; k<n; k++){
+            array1.push(255/(n-1) * (n-1-k));
+        }
+        array1.reverse();
+        // array1 = [255, ,,,,0], 这个是最终， 最开始的是
+        var array2 = [];
+        for(var j=1; j != array1.length+1; j++){
+            var temp_a = array1.slice(0,j);
+            temp_a.reverse();
+            var temp = [];
+            for(var k=j; k<array1.length; k++){
+                temp_a.push(200); // rgb(200,200,200) 空白色素; 三角阵另外一部分
+            }
+            array2.push(temp_a);
+        }
+        return array2;
+    }
+
+    function main() {
+        init();
+        var array2 = setJsonData();
+        var i = 0;
+         window.setInterval(function () {
+                if(i != n){
+                    for (var j=0; j<=i; j++){
+                        var temp_id = "#c" + (j+1);
+                        var temp_fill = "rgb(";
+                            temp_fill += parseInt(array2[i][j]);
+                            temp_fill += "," + parseInt(array2[i][j]);
+                            temp_fill += ","+ parseInt(array2[i][j]) +")";
+                        $(temp_id).attr({fill: temp_fill}); //, r: i*j % 10
+                        // 注意: 这里的色素 要是变暗和黑色进行 alfa * (1-alfa) 但是必须是Int, 其他类型变化不稳定。
+                    }
+                    i += 1;
+                }else{
+                   i = 0;
+                   for (var j=0; j<n; j++) {
+                       var temp_id = "#c" + (j + 1);
+                       $(temp_id).attr({fill: "red", r: width/2});
+                   }
+                }
+        }, speed);
+    }
+    main();
+	
+	
+</script>
+
+</body>
+</html>
